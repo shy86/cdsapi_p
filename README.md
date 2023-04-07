@@ -59,5 +59,5 @@ c.run(overwrite=True) # If overwrite == True, skip existed file
 
 ## TODO
 
-- [x] 提升代码鲁棒性（线程复活机制、错误处理）
-- [x] 添加 Toolbox 支持
+- [ ] 提升代码鲁棒性（线程复活机制、错误处理）
+- [ ] 添加 Toolbox 支持
