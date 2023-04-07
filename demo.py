@@ -5,7 +5,7 @@ keys = ["111111:xxxxxx", "211111:xxxxxx"]
 c = cdsapi_p(keys=keys)
 
 # step2. Add tasks to client
-for year in range(2000, 2010):
+for year in range(1990, 2010):
     param = (
         "reanalysis-era5-single-levels",
         {
@@ -23,7 +23,7 @@ for year in range(2000, 2010):
                 "04",
                 "05",
             ],
-            "time": "14:00",
+            "time": ["16:00", "17:00", "18:00", "19:00", "20:00", "21:00"],
             "area": [
                 55,
                 70,

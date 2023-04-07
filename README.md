@@ -10,13 +10,11 @@
 from api import cdsapi_p
 
 # step1. Init client and set keys
-# 第一步 添加不同账户的key
 keys = ["111111:xxxxxx", "211111:xxxxxx"]
 c = cdsapi_p(keys=keys)
 
 # step2. Add tasks to client
-# 第二步 添加任务
-for year in range(2000, 2010):
+for year in range(1990, 2010):
     param = (
         "reanalysis-era5-single-levels",
         {
@@ -34,7 +32,7 @@ for year in range(2000, 2010):
                 "04",
                 "05",
             ],
-            "time": "14:00",
+            "time": ["16:00", "17:00", "18:00", "19:00", "20:00", "21:00"],
             "area": [
                 55,
                 70,
@@ -49,12 +47,11 @@ for year in range(2000, 2010):
     c.add(param)
 
 # step3. (optional) Check tasks amount
-# 第三步 （可选） 查看任务数量
 c.count()
 
 # step4. Run tasks
-# 第四步 开始任务
-c.run(overwrite=True) # If overwrite == True, skip existed file
+## overwrite: If True, skip existed file
+c.run(overwrite=True)
 ```
 
 ## TODO

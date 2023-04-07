@@ -10,7 +10,7 @@ from tqdm import tqdm
 class cdsapi_p:
     def __init__(self, keys, url="https://cds.climate.copernicus.eu/api/v2"):
         self._url = url
-        self._params = []
+        self._params = Queue()
         self._init_auths(keys)
 
     def key2auth(self, key):
@@ -23,22 +23,20 @@ class cdsapi_p:
         self._auths = itertools.cycle(enumerate(auths))
 
     def add(self, param):
-        self._params.append(param)
+        self._params.put(param)
 
     def count(self):
-        return len(self._params)
+        return self._params.qsize()
 
     def Poster(self, overwrite):
-        # item = self.q_c2p.pop()
-        # name, param, out, auth = *item[0], item[1]
         idx, auth = next(self._auths)
-        for param in self._params:
+        while not self._params.empty():
+            param = self._params.get()
             name, request, outfile = param
             if os.path.isfile(outfile) and not overwrite:
                 continue
 
             url = f"{self._url}/resources/{name}"
-
             resp = requests.post(url, json=request, auth=auth)
             json = resp.json()
 
@@ -47,12 +45,13 @@ class cdsapi_p:
                 self._qloc.put(item)
             elif resp.status_code == 202:
                 item = (auth, json["request_id"], outfile)
-                # self.q_rid.put(item)
                 self._tasks[idx].put(item)
                 idx, auth = next(self._auths)
+            else:
+                self._params.put(param)
 
-        for i in self._tasks:
-            i.put(self._sentinel)
+        for q in self._tasks:
+            q.put(self._sentinel)
 
     def Checker(self, idx):
         while True:
