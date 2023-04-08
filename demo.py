@@ -1,5 +1,6 @@
-from api import cdsapi_p
+from api import cdsapi_p, cdsapi_s
 
+# cdsapi_p
 # step1. Init client and set keys
 keys = ["111111:xxxxxx", "211111:xxxxxx"]
 c = cdsapi_p(keys=keys)
@@ -43,3 +44,65 @@ c.count()
 # step4. Run tasks
 ## overwrite: If True, skip existed file
 c.run(overwrite=True)
+
+
+# cdsapi_s
+c = cdsapi_s(keys=keys)
+
+func = "retrieve"
+name = "reanalysis-era5-single-levels"
+
+for year in range(2000, 2010):
+    param = {
+        "product_type": "reanalysis",
+        "variable": "2m_temperature",
+        "year": year,
+        "month": [
+            "01",
+            "02",
+            "03",
+        ],
+        "day": [
+            "07",
+            "08",
+            "09",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+        ],
+        "time": [
+            "00:00",
+            "01:00",
+            "02:00",
+            "03:00",
+            "04:00",
+            "05:00",
+            "06:00",
+            "07:00",
+            "08:00",
+        ],
+        "area": [
+            60,
+            70,
+            10,
+            140,
+        ],
+        "format": "netcdf",
+    }
+    outfile = f"D:/temp/{year}.nc"
+
+    c.add(func, name, param, outfile)
+
+c.count()
+
+c.run()

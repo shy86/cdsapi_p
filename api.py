@@ -5,6 +5,10 @@ import time
 import threading
 import os.path
 from tqdm import tqdm
+import cdsapi
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class cdsapi_p:
@@ -130,3 +134,34 @@ class cdsapi_p:
             c_thread.join()
 
         p_thread.join()
+
+
+class cdsapi_s:
+    def __init__(self, keys, url="https://cds.climate.copernicus.eu/api/v2"):
+        self._url = url
+        self._params = Queue()
+        self.keys = keys
+
+    def add(self, func, *args):
+        self._params.put((func, *args))
+
+    def count(self):
+        return self._params.qsize()
+
+    def worker(self, key, pbar):
+        c = cdsapi.Client(url=self._url, key=key, quiet=True, delete=True, verify=False)
+        while True:
+            func, *args = self._params.get()
+            func = getattr(c, func)
+            func(*args)
+
+            pbar.update(1)
+            pbar.set_postfix_str(f"lastest: {args[-1]}")
+            self._params.task_done()
+
+    def run(self, **kwargs):
+        pbar = tqdm(total=self.count(), desc="Download")
+        for key in self.keys:
+            threading.Thread(target=self.worker, args=(key, pbar), daemon=True).start()
+
+        self._params.join()
