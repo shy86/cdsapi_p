@@ -32,6 +32,11 @@ class cdsapi_p:
     def count(self):
         return self._params.qsize()
 
+    def clear(self):
+        self._params = Queue()
+        # while not self._params.empty():
+        #     self._params.get_nowait()
+
     def Poster(self, overwrite):
         idx, auth = next(self._auths)
         while not self._params.empty():
@@ -148,18 +153,54 @@ class cdsapi_s:
     def count(self):
         return self._params.qsize()
 
+    def clear(self):
+        self._params = Queue()
+        # while not self._params.empty():
+        #     self._params.get_nowait()
+
     def worker(self, key, pbar):
         c = cdsapi.Client(url=self._url, key=key, quiet=True, delete=True, verify=False)
         while True:
-            func, *args = self._params.get()
+            item = self._params.get()
+            func, *args = item
             func = getattr(c, func)
-            func(*args)
+
+            try:
+                func(*args)
+                print(key)
+
+            except Exception as e:
+                print("e")
+                with self.__lock:
+                    self.__error.append(e)
+                    self.__flag += 1
+                    pbar.set_postfix_str(
+                        f"threads: {len(self.keys) - self.__flag}, lastest: {key} died"
+                    )
+                    if self.__flag == len(self.keys):
+                        print(self.__error)
+                        os._exit(1)
+                        # self._params.task_done()
+                        # for _ in range(self.count()):
+                        #     self._params.get()
+                        #     self._params.task_done()
+                        # sys.exit(1)
+
+                self._params.put(item)
+                break
 
             pbar.update(1)
-            pbar.set_postfix_str(f"lastest: {args[-1]}")
+            print("test")
+            pbar.set_postfix_str(
+                f"threads: {len(self.keys) - self.__flag}, lastest: {args[-1]}"
+            )
             self._params.task_done()
 
     def run(self, **kwargs):
+        self.__flag = 0
+        self.__lock = threading.Lock()
+        self.__error = []
+
         pbar = tqdm(total=self.count(), desc="Download")
         for key in self.keys:
             threading.Thread(target=self.worker, args=(key, pbar), daemon=True).start()
